@@ -4,7 +4,6 @@ trigger:
 variables:
   azureSubscription: '2e8ea5df-06c8-40cc-97a1-4bd73594d716' # Service connection name or ID
   webAppName: 'react-cicd-demo'  # Azure Web App name
-  vmImageName: 'ubuntu-latest'
 
 stages:
 - stage: Build
@@ -12,7 +11,7 @@ stages:
   jobs:
   - job: Build
     pool:
-      vmImage: my-pool
+      name: my-pool   # <-- your self-hosted agent pool
     steps:
     - task: NodeTool@0
       inputs:
@@ -44,7 +43,7 @@ stages:
   - deployment: Deploy
     environment: 'production'
     pool:
-      vmImage: $(vmImageName)
+      name: my-pool   # <-- using your self-hosted agent pool
     strategy:
       runOnce:
         deploy:
