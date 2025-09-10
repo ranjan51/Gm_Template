@@ -2,9 +2,8 @@ trigger:
 - main
 
 variables:
-  azureSubscription: '2e8ea5df-06c8-40cc-97a1-4bd73594d716' # your Azure service connection ID
-  webAppName: 'react-cicd-demo'  # must match your Azure Web App name
-  environmentName: 'react-cicd-demo'
+  azureSubscription: '2e8ea5df-06c8-40cc-97a1-4bd73594d716' # Service connection name or ID
+  webAppName: 'react-cicd-demo'  # Azure Web App name
   vmImageName: 'ubuntu-latest'
 
 stages:
@@ -13,7 +12,7 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: my-pool
+      vmImage: $(vmImageName)
     steps:
     - task: NodeTool@0
       inputs:
@@ -23,18 +22,18 @@ stages:
     - script: |
         npm install
         npm run build
-      displayName: 'Install dependencies & build React app'
+      displayName: 'Build React app'
 
     - task: ArchiveFiles@2
-      displayName: 'Archive build output'
       inputs:
         rootFolderOrFile: '$(System.DefaultWorkingDirectory)/build'
         includeRootFolder: false
         archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/build.zip'
         replaceExistingArchive: true
+      displayName: 'Archive build output'
 
-    - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+    - publish: '$(Build.ArtifactStagingDirectory)/build.zip'
       artifact: drop
 
 - stage: Deploy
@@ -43,7 +42,7 @@ stages:
   condition: succeeded()
   jobs:
   - deployment: Deploy
-    environment: $(environmentName)
+    environment: 'production'
     pool:
       vmImage: $(vmImageName)
     strategy:
@@ -51,10 +50,10 @@ stages:
         deploy:
           steps:
           - task: AzureRmWebAppDeployment@4
-            displayName: 'Deploy React build to Azure App Service'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
               WebAppName: $(webAppName)
-              packageForLinux: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+              packageForLinux: '$(Pipeline.Workspace)/drop/build.zip'
               RuntimeStack: 'NODE|20-lts'
+            displayName: 'Deploy React app to Azure App Service'
