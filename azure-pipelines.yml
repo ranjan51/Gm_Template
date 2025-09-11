@@ -11,7 +11,7 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: my-pool   # <-- your self-hosted agent pool
+      name: my-pool   # self-hosted agent pool
     steps:
     - task: NodeTool@0
       inputs:
@@ -25,7 +25,7 @@ stages:
 
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/build'
+        rootFolderOrFile: '$(Build.SourcesDirectory)/build'   # <-- FIXED PATH
         includeRootFolder: false
         archiveType: zip
         archiveFile: '$(Build.ArtifactStagingDirectory)/build.zip'
@@ -43,7 +43,7 @@ stages:
   - deployment: Deploy
     environment: 'production'
     pool:
-      name: my-pool   # <-- using your self-hosted agent pool
+      name: my-pool   # self-hosted agent pool
     strategy:
       runOnce:
         deploy:
