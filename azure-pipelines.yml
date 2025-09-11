@@ -11,9 +11,9 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: my-pool   # your self-hosted pool
+      name: my-pool
     steps:
-    - checkout: self   # ✅ ensures repo is cloned into _work/1/s
+    - checkout: self
 
     - task: NodeTool@0
       inputs:
@@ -21,22 +21,23 @@ stages:
       displayName: 'Install Node.js'
 
     - script: |
+        cd my-app
         npm install
         npm run build
       workingDirectory: '$(Build.SourcesDirectory)'
       displayName: 'Build React app'
 
     - script: |
-        echo "=== Listing contents of $(Build.SourcesDirectory) ==="
-        dir "$(Build.SourcesDirectory)"
+        echo "=== Listing contents of $(Build.SourcesDirectory)\my-app ==="
+        dir "$(Build.SourcesDirectory)\my-app"
         echo "=== Listing contents of build folder (if exists) ==="
-        dir "$(Build.SourcesDirectory)\build"
+        dir "$(Build.SourcesDirectory)\my-app\build"
       displayName: 'Check build output'
-      continueOnError: true   # prevents pipeline from failing just because dir can't find the folder
+      continueOnError: true
 
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)\build'
+        rootFolderOrFile: '$(Build.SourcesDirectory)\my-app\build'
         includeRootFolder: false
         archiveType: zip
         archiveFile: '$(Build.ArtifactStagingDirectory)\build.zip'
