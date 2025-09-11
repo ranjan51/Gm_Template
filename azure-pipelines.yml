@@ -2,8 +2,8 @@ trigger:
 - main
 
 variables:
-  azureSubscription: '2e8ea5df-06c8-40cc-97a1-4bd73594d716' # Service connection name or ID
-  webAppName: 'react-cicd-demo'  # Azure Web App name
+  azureSubscription: '2e8ea5df-06c8-40cc-97a1-4bd73594d716'
+  webAppName: 'react-cicd-demo'
 
 stages:
 - stage: Build
@@ -11,9 +11,9 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: my-pool   # your self-hosted agent pool
+      name: my-pool   # your self-hosted pool
     steps:
-    - checkout: self   # ✅ ensures your repo is cloned onto the agent
+    - checkout: self   # ✅ ensures repo is cloned into _work/1/s
 
     - task: NodeTool@0
       inputs:
@@ -23,25 +23,27 @@ stages:
     - script: |
         npm install
         npm run build
+      workingDirectory: '$(Build.SourcesDirectory)'
       displayName: 'Build React app'
 
     - script: |
         echo "=== Listing contents of $(Build.SourcesDirectory) ==="
-        dir $(Build.SourcesDirectory)
+        dir "$(Build.SourcesDirectory)"
         echo "=== Listing contents of build folder (if exists) ==="
-        dir $(Build.SourcesDirectory)\build || echo "No build folder found"
+        dir "$(Build.SourcesDirectory)\build"
       displayName: 'Check build output'
+      continueOnError: true   # prevents pipeline from failing just because dir can't find the folder
 
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/build'
+        rootFolderOrFile: '$(Build.SourcesDirectory)\build'
         includeRootFolder: false
         archiveType: zip
-        archiveFile: '$(Build.ArtifactStagingDirectory)/build.zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)\build.zip'
         replaceExistingArchive: true
       displayName: 'Archive build output'
 
-    - publish: '$(Build.ArtifactStagingDirectory)/build.zip'
+    - publish: '$(Build.ArtifactStagingDirectory)\build.zip'
       artifact: drop
 
 - stage: Deploy
@@ -52,7 +54,7 @@ stages:
   - deployment: Deploy
     environment: 'production'
     pool:
-      name: my-pool   # self-hosted agent pool
+      name: my-pool
     strategy:
       runOnce:
         deploy:
