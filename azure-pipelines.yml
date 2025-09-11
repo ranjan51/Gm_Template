@@ -11,8 +11,10 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: my-pool   # self-hosted agent pool
+      name: my-pool   # your self-hosted agent pool
     steps:
+    - checkout: self   # ✅ ensures your repo is cloned onto the agent
+
     - task: NodeTool@0
       inputs:
         versionSpec: '20.x'
