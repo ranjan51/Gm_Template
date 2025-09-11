@@ -23,9 +23,16 @@ stages:
         npm run build
       displayName: 'Build React app'
 
+    - script: |
+        echo "=== Listing contents of $(Build.SourcesDirectory) ==="
+        dir $(Build.SourcesDirectory)
+        echo "=== Listing contents of build folder (if exists) ==="
+        dir $(Build.SourcesDirectory)\build || echo "No build folder found"
+      displayName: 'Check build output'
+
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/build'   # <-- FIXED PATH
+        rootFolderOrFile: '$(Build.SourcesDirectory)/build'
         includeRootFolder: false
         archiveType: zip
         archiveFile: '$(Build.ArtifactStagingDirectory)/build.zip'
