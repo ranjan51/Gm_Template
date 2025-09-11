@@ -23,19 +23,32 @@ stages:
         echo "DefaultWorkingDirectory: $(System.DefaultWorkingDirectory)"
         echo "SourcesDirectory:       $(Build.SourcesDirectory)"
         echo "Pipeline.Workspace:     $(Pipeline.Workspace)"
-        echo "Repo tree:"
-        tree "$(System.DefaultWorkingDirectory)" /f /a || ls -laR "$(System.DefaultWorkingDirectory)"
-        cd "$(System.DefaultWorkingDirectory)/my-app"
+        echo "Repo tree (top 2 levels):"
+        dir "$(Build.SourcesDirectory)" || ls -la "$(Build.SourcesDirectory)"
+        echo "Entering my-app and building..."
+        cd "$(Build.SourcesDirectory)/my-app"
         npm ci
         npm run build
-        echo "Built dist contents:"
-        dir dist || ls -la dist
+        echo "Built dist contents (if any):"
+        dir dist || ls -la dist || true
       displayName: Build Vite app
+
+    - powershell: |
+        $dist = "$(Build.SourcesDirectory)\my-app\dist"
+        Write-Host "Expecting dist at: $dist"
+        if (-not (Test-Path $dist)) {
+          Write-Error "dist not found at $dist. Check vite.config build.outDir or folder path."
+          Write-Host "Vite may have set a different outDir. Dumping my-app after build..."
+          Get-ChildItem -Recurse -Force "$(Build.SourcesDirectory)\my-app" | Select-Object FullName
+          exit 1
+        }
+      displayName: Verify dist exists
+      failOnStderr: true
 
     - task: ArchiveFiles@2
       displayName: Archive dist output
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/my-app/dist'
+        rootFolderOrFile: '$(Build.SourcesDirectory)/my-app/dist'
         includeRootFolder: false
         archiveType: zip
         archiveFile: '$(Build.ArtifactStagingDirectory)/dist.zip'
