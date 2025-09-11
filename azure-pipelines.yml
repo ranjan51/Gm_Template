@@ -1,9 +1,10 @@
 trigger:
-- main
+  - main
 
 variables:
-  azureSubscription: '2e8ea5df-06c8-40cc-97a1-4bd73594d716' # Service connection name or ID
-  webAppName: 'react-cicd-demo'  # Azure Web App name
+  azureSubscription: '2e8ea5df-06c8-40cc-97a1-4bd73594d716'
+  webAppName: 'react-cicd-demo'
+  nodeVersion: '20.x'
 
 stages:
 - stage: Build
@@ -11,29 +12,33 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: my-pool   # your self-hosted agent pool
+      name: my-pool   # self-hosted agent pool
     steps:
     - task: NodeTool@0
+      displayName: Install Node.js
       inputs:
-        versionSpec: '20.x'
-      displayName: 'Install Node.js'
+        versionSpec: '$(nodeVersion)'
 
     - script: |
-        cd my-app
-        npm install
+        echo "Working dir: $(System.DefaultWorkingDirectory)"
+        cd "$(System.DefaultWorkingDirectory)/my-app"
+        npm ci
         npm run build
-      displayName: 'Build Vite app'
+        echo "Dist contents:"
+        dir dist || ls -la dist
+      displayName: Build Vite app
 
     - task: ArchiveFiles@2
+      displayName: Archive dist output
       inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/my-app/dist'
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/my-app/dist'
         includeRootFolder: false
         archiveType: zip
         archiveFile: '$(Build.ArtifactStagingDirectory)/dist.zip'
         replaceExistingArchive: true
-      displayName: 'Archive dist output'
 
     - publish: '$(Build.ArtifactStagingDirectory)/dist.zip'
+      displayName: Publish artifact
       artifact: drop
 
 - stage: Deploy
@@ -50,10 +55,10 @@ stages:
         deploy:
           steps:
           - task: AzureRmWebAppDeployment@4
+            displayName: Deploy React app to Azure App Service
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
               WebAppName: $(webAppName)
               packageForLinux: '$(Pipeline.Workspace)/drop/dist.zip'
               RuntimeStack: 'NODE|20-lts'
-            displayName: 'Deploy React app to Azure App Service'
