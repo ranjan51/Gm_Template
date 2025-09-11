@@ -7,7 +7,7 @@ variables:
 
 stages:
 - stage: Build
-  displayName: Build React App
+  displayName: Build Vite React App
   jobs:
   - job: Build
     pool:
@@ -25,26 +25,26 @@ stages:
         npm install
         npm run build
       workingDirectory: '$(Build.SourcesDirectory)'
-      displayName: 'Build React app'
+      displayName: 'Build Vite app'
 
     - script: |
         echo "=== Listing contents of $(Build.SourcesDirectory)\my-app ==="
         dir "$(Build.SourcesDirectory)\my-app"
-        echo "=== Listing contents of build folder (if exists) ==="
-        dir "$(Build.SourcesDirectory)\my-app\build"
+        echo "=== Listing contents of dist folder (if exists) ==="
+        dir "$(Build.SourcesDirectory)\my-app\dist"
       displayName: 'Check build output'
       continueOnError: true
 
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)\my-app\build'
+        rootFolderOrFile: '$(Build.SourcesDirectory)\my-app\dist'
         includeRootFolder: false
         archiveType: zip
-        archiveFile: '$(Build.ArtifactStagingDirectory)\build.zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)\dist.zip'
         replaceExistingArchive: true
-      displayName: 'Archive build output'
+      displayName: 'Archive dist output'
 
-    - publish: '$(Build.ArtifactStagingDirectory)\build.zip'
+    - publish: '$(Build.ArtifactStagingDirectory)\dist.zip'
       artifact: drop
 
 - stage: Deploy
@@ -65,6 +65,6 @@ stages:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
               WebAppName: $(webAppName)
-              packageForLinux: '$(Pipeline.Workspace)/drop/build.zip'
+              packageForLinux: '$(Pipeline.Workspace)/drop/dist.zip'
               RuntimeStack: 'NODE|20-lts'
-            displayName: 'Deploy React app to Azure App Service'
+            displayName: 'Deploy Vite app to Azure App Service'
