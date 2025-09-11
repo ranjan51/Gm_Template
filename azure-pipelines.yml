@@ -12,7 +12,7 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: my-pool   # self-hosted agent pool
+      name: my-pool
     steps:
     - task: NodeTool@0
       displayName: Install Node.js
@@ -20,11 +20,15 @@ stages:
         versionSpec: '$(nodeVersion)'
 
     - script: |
-        echo "Working dir: $(System.DefaultWorkingDirectory)"
+        echo "DefaultWorkingDirectory: $(System.DefaultWorkingDirectory)"
+        echo "SourcesDirectory:       $(Build.SourcesDirectory)"
+        echo "Pipeline.Workspace:     $(Pipeline.Workspace)"
+        echo "Repo tree:"
+        tree "$(System.DefaultWorkingDirectory)" /f /a || ls -laR "$(System.DefaultWorkingDirectory)"
         cd "$(System.DefaultWorkingDirectory)/my-app"
         npm ci
         npm run build
-        echo "Dist contents:"
+        echo "Built dist contents:"
         dir dist || ls -la dist
       displayName: Build Vite app
 
@@ -47,7 +51,7 @@ stages:
   condition: succeeded()
   jobs:
   - deployment: Deploy
-    environment: 'production'
+    environment: production
     pool:
       name: my-pool
     strategy:
